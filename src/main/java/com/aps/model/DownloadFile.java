@@ -3,9 +3,11 @@ package com.aps.model;
 import java.util.Date;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @EqualsAndHashCode
+@ToString
 public class DownloadFile {
 
     private final String downloadURL;
@@ -13,7 +15,7 @@ public class DownloadFile {
     private final Date lastModified;
     private final String size;
 
-    private DownloadFile(String downloadURL, String fileName, Date lastModified, String size) {
+    private DownloadFile(final String downloadURL, final String fileName, final Date lastModified, final String size) {
         this.downloadURL = downloadURL;
         this.fileName = fileName;
         this.lastModified = lastModified;
@@ -32,22 +34,22 @@ public class DownloadFile {
         private Date lastModified;
         private String size;
 
-        public DownloadFileBuilder setDownloadURL(String downloadURL) {
+        public DownloadFileBuilder setDownloadURL(final String downloadURL) {
             this.downloadURL = downloadURL;
             return this;
         }
 
-        public DownloadFileBuilder setFileName(String fileName) {
+        public DownloadFileBuilder setFileName(final String fileName) {
             this.fileName = fileName;
             return this;
         }
 
-        public DownloadFileBuilder setLastModified(Date lastModified) {
+        public DownloadFileBuilder setLastModified(final Date lastModified) {
             this.lastModified = lastModified;
             return this;
         }
 
-        public DownloadFileBuilder setSize(String size) {
+        public DownloadFileBuilder setSize(final String size) {
             this.size = size;
             return this;
         }

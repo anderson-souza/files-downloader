@@ -6,6 +6,6 @@ import lombok.extern.java.Log;
 public class App {
 
     public static void main(String[] args) {
-        new DownloadService().baixarArquivos();
+        new DownloadService().downloadFiles();
     }
 }

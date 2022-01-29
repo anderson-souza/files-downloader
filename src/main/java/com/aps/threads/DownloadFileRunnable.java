@@ -22,7 +22,7 @@ public class DownloadFileRunnable implements Runnable {
 
     private final DownloadFile downloadFile;
 
-    public DownloadFileRunnable(DownloadFile downloadFile) {
+    public DownloadFileRunnable(final DownloadFile downloadFile) {
         this.downloadFile = downloadFile;
     }
 
@@ -38,20 +38,19 @@ public class DownloadFileRunnable implements Runnable {
     }
 
     private void newDownload() {
-        CloseableHttpClient client = HttpClients.createDefault();
-        File myFile = new File(downloadFile.getFileName());
+        final CloseableHttpClient client = HttpClients.createDefault();
+        final File myFile = new File(downloadFile.getFileName());
         log.info("INICIANDO DOWNLOAD: " + downloadFile.getFileName());
-        try (CloseableHttpResponse response = client
-            .execute(new HttpGet(downloadFile.getDownloadURL()))) {
-            HttpEntity entity = response.getEntity();
+        try (CloseableHttpResponse response = client.execute(new HttpGet(downloadFile.getDownloadURL()))) {
+            final HttpEntity entity = response.getEntity();
             if (entity != null) {
-                InputStream inputStream = entity.getContent();
+                final InputStream inputStream = entity.getContent();
                 try (OutputStream outputStream = new FileOutputStream(myFile)) {
                     IOUtils.copy(inputStream, outputStream);
                 }
                 log.info("DOWNLOAD REALIZADO COM SUCESSO: " + downloadFile.getFileName());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log.severe("Erro ao baixar o arquivo: " + e.getLocalizedMessage());
             e.printStackTrace();
         }

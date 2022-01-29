@@ -4,11 +4,14 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import com.aps.model.DownloadFile;
 import com.aps.model.DownloadFile.DownloadFileBuilder;
+import com.aps.threads.DownloadFileRunnable;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,7 +26,13 @@ import org.jsoup.select.Elements;
 @Log
 public class DownloadService {
 
-    public static final String BASE_URL = "https://archive.apache.org/dist/maven/plugins/";
+    private final String[] urls;
+    private final String saveFolderPath;
+
+    public DownloadService(final String[] urls, final String saveFolderPath) {
+        this.urls = urls;
+        this.saveFolderPath = saveFolderPath;
+    }
 
     private static final String REGEX_DOWNLOADABLE_LINK = "(\\.)(.+(?<!/)$)";
     private static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd HH:mm";
@@ -39,17 +48,27 @@ public class DownloadService {
 
     private void runDownloadThreads(final Set<DownloadFile> downloadFiles) {
         if (!downloadFiles.isEmpty()) {
-//        final ExecutorService executor = Executors
-//            .newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//        downloadFiles.stream().map(DownloadFileRunnable::new).forEach(executor::execute);
-//        executor.shutdown();
+            final ExecutorService executor = Executors
+                .newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            downloadFiles.stream().map(DownloadFileRunnable::new).forEach(executor::execute);
+            executor.shutdown();
         } else {
             log.info("Não foram encontrados registros para download");
         }
     }
 
     private Set<DownloadFile> getDownloadFiles() throws IOException {
-        final Set<Element> downloadableLinks = getAllDownloadableLinksFromURL(BASE_URL);
+
+        final Set<DownloadFile> allFiles = new HashSet<>();
+        for (final String url : urls) {
+            allFiles.addAll(getFiles(url));
+        }
+
+        return allFiles;
+    }
+
+    private Set<DownloadFile> getFiles(final String url) throws IOException {
+        final Set<Element> downloadableLinks = getAllDownloadableLinksFromURL(url);
         log.log(Level.INFO, String.format("Foram encontrados %s links", downloadableLinks.size()));
 
         final Set<DownloadFile> files = new HashSet<>();
@@ -74,7 +93,7 @@ public class DownloadService {
             }
 
             final DownloadFile downloadFile = new DownloadFileBuilder()
-                .setDownloadURL(BASE_URL + getHrefFromElement(link))
+                .setDownloadURL(url + getHrefFromElement(link))
                 .setFileName(getHrefFromElement(link))
                 .setLastModified(date)
                 .setSize(size)

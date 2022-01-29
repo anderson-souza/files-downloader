@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -40,7 +41,8 @@ public class DownloadFileRunnable implements Runnable {
 
     private void newDownload() {
         final CloseableHttpClient client = HttpClients.createDefault();
-        final File myFile = new File(downloadFile.getFileName());
+        final File myFile = new File(
+            FilenameUtils.concat(downloadFile.getSaveFolderPath(), downloadFile.getFileName()));
         log.info("INICIANDO DOWNLOAD: " + downloadFile.getFileName());
         try (CloseableHttpResponse response = client
             .execute(new HttpGet(downloadFile.getDownloadURL()))) {

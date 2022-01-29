@@ -9,8 +9,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -18,36 +20,43 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
+@Log
 public class DownloadService {
 
     public static final String BASE_URL = "https://archive.apache.org/dist/maven/plugins/";
 
     private static final String REGEX_DOWNLOADABLE_LINK = "(\\.)(.+(?<!/)$)";
-    public static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd HH:mm";
-    final Pattern pattern = Pattern.compile(REGEX_DOWNLOADABLE_LINK);
+    private static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd HH:mm";
+    private final Pattern pattern = Pattern.compile(REGEX_DOWNLOADABLE_LINK);
 
     public void downloadFiles() {
         try {
             runDownloadThreads(getDownloadFiles());
         } catch (final IOException e) {
-            e.printStackTrace();
+            log.log(Level.SEVERE, "Ocorreu um erro na aplicação", e);
         }
     }
 
     private void runDownloadThreads(final Set<DownloadFile> downloadFiles) {
+        if (!downloadFiles.isEmpty()) {
 //        final ExecutorService executor = Executors
 //            .newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 //        downloadFiles.stream().map(DownloadFileRunnable::new).forEach(executor::execute);
 //        executor.shutdown();
-        System.out.println(downloadFiles);
+        } else {
+            log.info("Não foram encontrados registros para download");
+        }
     }
 
     private Set<DownloadFile> getDownloadFiles() throws IOException {
         final Set<Element> downloadableLinks = getAllDownloadableLinksFromURL(BASE_URL);
+        log.log(Level.INFO, String.format("Foram encontrados %s links", downloadableLinks.size()));
 
         final Set<DownloadFile> files = new HashSet<>();
 
+        log.info("Iniciando montagem de objetos para download");
         downloadableLinks.forEach(link -> {
+            log.info("Iniciando coleta de data e tamanho do arquivo");
             Date date = null;
             String size = "";
 
@@ -59,18 +68,24 @@ public class DownloadService {
                         .parse(StringUtils.substring(text, 0, 16));
                     size = StringUtils.substring(text, 17);
                 } catch (final Exception e) {
+                    log.log(Level.SEVERE, "Ocorreu um erro ao fazer o parse da data", e);
                     e.printStackTrace();
                 }
             }
 
-            files.add(new DownloadFileBuilder()
+            final DownloadFile downloadFile = new DownloadFileBuilder()
                 .setDownloadURL(BASE_URL + getHrefFromElement(link))
                 .setFileName(getHrefFromElement(link))
                 .setLastModified(date)
                 .setSize(size)
-                .createDownloadFile());
+                .createDownloadFile();
+
+            log.info(String.format("Arquivo montado para download %s", downloadFile));
+
+            files.add(downloadFile);
         });
 
+        log.info("Fim da montagem de objetos para download");
         return files;
     }
 
@@ -79,6 +94,7 @@ public class DownloadService {
     }
 
     private Set<Element> getAllDownloadableLinksFromURL(final String url) throws IOException {
+        log.info(String.format("Iniciando busca por links na URL: %s", url));
         final Elements hrefs = Jsoup.connect(url).get().select("a[href]");
         return hrefs.stream().filter(href -> isValidLink(getHrefFromElement(href)))
             .collect(Collectors.toSet());

@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -41,7 +42,8 @@ public class DownloadFileRunnable implements Runnable {
         final CloseableHttpClient client = HttpClients.createDefault();
         final File myFile = new File(downloadFile.getFileName());
         log.info("INICIANDO DOWNLOAD: " + downloadFile.getFileName());
-        try (CloseableHttpResponse response = client.execute(new HttpGet(downloadFile.getDownloadURL()))) {
+        try (CloseableHttpResponse response = client
+            .execute(new HttpGet(downloadFile.getDownloadURL()))) {
             final HttpEntity entity = response.getEntity();
             if (entity != null) {
                 final InputStream inputStream = entity.getContent();
@@ -51,7 +53,7 @@ public class DownloadFileRunnable implements Runnable {
                 log.info("DOWNLOAD REALIZADO COM SUCESSO: " + downloadFile.getFileName());
             }
         } catch (final IOException e) {
-            log.severe("Erro ao baixar o arquivo: " + e.getLocalizedMessage());
+            log.log(Level.SEVERE, "Erro ao baixar o arquivo", e);
             e.printStackTrace();
         }
     }
